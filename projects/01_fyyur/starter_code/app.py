@@ -102,27 +102,49 @@ def index():
 def venues():
   # TODO: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
+  STATE, CITY, NAME, ID = 0, 1, 2, 3
+  venues = db.session.query(Venue.state, Venue.city, Venue.name, Venue.id).all()
+  raw_data = {}
+  for v in venues:
+    if raw_data.get(v[STATE]) is None:
+      raw_data[v[STATE]] = {}
+    if raw_data[v[STATE]].get(v[CITY]) is None:
+      raw_data[v[STATE]][v[CITY]] = []
+    raw_data[v[STATE]][v[CITY]].append({
+      "name": v[NAME],
+      "id": v[ID],
+      "num_upcoming_shows": 0
+    })
+  data = []
+  for state in raw_data:
+    for city in raw_data[state]:
+      data.append({
+        "city": city,
+        "state": state,
+        "venues": raw_data[state][city]
+      })
+
+  # data=[{
+  #   "city": "San Francisco",
+  #   "state": "CA",
+  #   "venues": [{
+  #     "id": 1,
+  #     "name": "The Musical Hop",
+  #     "num_upcoming_shows": 0,
+  #   }, {
+  #     "id": 3,
+  #     "name": "Park Square Live Music & Coffee",
+  #     "num_upcoming_shows": 1,
+  #   }]
+  # }, {
+  #   "city": "New York",
+  #   "state": "NY",
+  #   "venues": [{
+  #     "id": 2,
+  #     "name": "The Dueling Pianos Bar",
+  #     "num_upcoming_shows": 0,
+  #   }]
+  # }]
   return render_template('pages/venues.html', areas=data);
 
 @app.route('/venues/search', methods=['POST'])
@@ -271,16 +293,26 @@ def delete_venue(venue_id):
 @app.route('/artists')
 def artists():
   # TODO: replace with real data returned from querying the database
-  data=[{
-    "id": 4,
-    "name": "Guns N Petals",
-  }, {
-    "id": 5,
-    "name": "Matt Quevedo",
-  }, {
-    "id": 6,
-    "name": "The Wild Sax Band",
-  }]
+  NAME, ID = 0, 1
+  artists = db.session.query(Artist.name, Artist.id).all()
+  data = []
+  for v in artists:
+    data.append({
+      "name": v[NAME],
+      "id": v[ID],
+    })
+
+
+  # data=[{
+  #   "id": 4,
+  #   "name": "Guns N Petals",
+  # }, {
+  #   "id": 5,
+  #   "name": "Matt Quevedo",
+  # }, {
+  #   "id": 6,
+  #   "name": "The Wild Sax Band",
+  # }]
   return render_template('pages/artists.html', artists=data)
 
 @app.route('/artists/search', methods=['POST'])
@@ -303,7 +335,7 @@ def show_artist(artist_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
   data1={
-    "id": 4,
+    "id": 1,
     "name": "Guns N Petals",
     "genres": ["Rock n Roll"],
     "city": "San Francisco",
