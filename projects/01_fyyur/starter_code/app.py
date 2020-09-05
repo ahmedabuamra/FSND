@@ -54,14 +54,17 @@ class Artist(db.Model):
     __tablename__ = 'Artist'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
+    name = db.Column(db.String, nullable=False)
+    city = db.Column(db.String(120), nullable=False)
+    state = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
+    genres = db.Column(db.ARRAY(db.String(120)), nullable=False)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
+    website = db.Column(db.String(120))
+    seeking_venue = db.Column(db.Boolean, default=False)
+    seeking_description = db.Column(db.String(500))
 
     def __repr__(self):
       return f'<Artist ID: {self.id}, name: {self.name}>'
@@ -437,14 +440,27 @@ def create_artist_form():
 
 @app.route('/artists/create', methods=['POST'])
 def create_artist_submission():
-  # called upon submitting the new artist listing form
-  # TODO: insert form data as a new Venue record in the db, instead
+  # TODO: insert form data as a new Artist record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
-
-  # on successful db insert, flash success
-  flash('Artist ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
+  data = dict((key, 
+              request.form.getlist(key) if len(request.form.getlist(key)) > 1 
+              else request.form.getlist(key)[0]) for key in request.form.keys())
+  try:
+    data['seeking_venue'] = True if data.get('seeking_venue') == 'y' else False
+    venue = Artist(**data)
+    db.session.add(venue)
+    db.session.commit()
+    flash('Artist ' + data['name'] + ' was successfully listed!')
+  except Exception as e:
+    print(e)
+    db.session.rollback()
+    # TODO: on unsuccessful db insert, flash an error instead.
+    # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
+    # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/    
+    flash('An error occurred. Artist ' + data['name'] + ' could not be listed.', 'error')
+  finally:
+    db.session.close()
+  
   return render_template('pages/home.html')
 
 
