@@ -6,3 +6,4 @@ flask-sqlalchemy
 flask-moment
 psycopg2
 Flask-Migrate
+python-dotenv
