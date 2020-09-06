@@ -84,7 +84,8 @@ class Artist(db.Model):
   seeking_description = db.Column(db.String(500))
   venues = db.relationship('Venue', 
                             secondary='Show',
-                            backref=db.backref("artists"))
+                            backref=db.backref("artists"),
+                            cascade="all, delete",)
 
   def __repr__(self):
     return f'<Artist ID: {self.id}, name: {self.name}>'
@@ -114,11 +115,11 @@ class Shows(db.Model):
     primary_key=True)
   venue_id = db.Column(
     db.Integer, 
-    db.ForeignKey('Venue.id'), 
+    db.ForeignKey('Venue.id', ondelete="CASCADE"), 
     primary_key=True)
   start_time = db.Column(db.DateTime, default=datetime.datetime.utcnow)
   artist = db.relationship(Artist, backref="shows")
-  venue = db.relationship(Venue, backref="shows")
+  venue = db.relationship(Venue, backref="shows", cascade="all, delete")
 
 db.create_all()
 
@@ -197,7 +198,7 @@ def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
   shows = Shows.query.filter_by(venue_id=venue_id)
-  data = shows[0].venue.to_dict()
+  data = Venue.query.get(venue_id).to_dict()
   data["upcoming_shows"] = []
   data["past_shows"] = []
   timenow = datetime.datetime.now()
@@ -249,14 +250,22 @@ def create_venue_submission():
     db.session.close()
   return render_template('pages/home.html')
 
-@app.route('/venues/<venue_id>', methods=['DELETE'])
+@app.route('/venues/<int:venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
   # TODO: Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
 
   # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
   # clicking that button delete it from the db then redirect the user to the homepage
-  return None
+  try:
+    Venue.query.filter_by(id=venue_id).delete()
+    db.session.commit()
+  except Exception as e:
+    print(e)
+    db.session.rollback()
+  finally:
+    db.session.close()
+  return redirect(url_for('index'), code=307)
 
 #  Artists
 #  ----------------------------------------------------------------
@@ -297,7 +306,7 @@ def show_artist(artist_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
   shows = Shows.query.filter_by(artist_id=artist_id)
-  data = shows[0].artist.to_dict()
+  data = Artist.query.get(artist_id).to_dict()
   data["upcoming_shows"] = []
   data["past_shows"] = []
   timenow = datetime.datetime.now()
@@ -333,6 +342,7 @@ def edit_artist_submission(artist_id):
   to_update = dict((key, 
               request.form.getlist(key) if len(request.form.getlist(key)) > 1 
               else request.form.getlist(key)[0]) for key in request.form.keys())
+  to_update['seeking_venue'] = True if data.get('seeking_venue') == 'y' else False
   artist = Artist.query.get(artist_id)
   try:
     artist.name = to_update.get("name")
@@ -369,6 +379,7 @@ def edit_venue_submission(venue_id):
   to_update = dict((key, 
             request.form.getlist(key) if len(request.form.getlist(key)) > 1 
             else request.form.getlist(key)[0]) for key in request.form.keys())
+  to_update['seeking_venue'] = True if data.get('seeking_venue') == 'y' else False
   try:
     venue.name = to_update.get("name")
     venue.city = to_update.get("city")

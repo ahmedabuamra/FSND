@@ -2,11 +2,34 @@
 {% block title %}Venue Search{% endblock %}
 {% block content %}
 <div class="row">
+	<form class="form col-sm-3" method="GET" action="/venues/{{venue.id}}/edit">
+		<input type="submit" value="Edit" class="btn btn-primary btn-lg btn-block">
+	</form>
+	<form id="deleteForm" class="form col-sm-3">
+		<input type="submit" value="Delete" class="btn btn-danger btn-lg btn-block">
+	</form>
+</div>
+<script>
+	console.log(document.getElementById("deleteForm"))
+	document.getElementById("deleteForm").onsubmit = function(e){
+		e.preventDefault();
+		fetch("/venues/{{venue.id}}", {
+			method: "DELETE",
+			redirect: 'follow',
+			headers: {
+				"Content-Type": "application/json"
+			}
+		}).then(response => {
+			console.log(response)
+			if (response.redirected) {
+				window.location.href = response.url;
+			}
+        });
+	}
+</script>
+<div class="row">
 	<div class="col-sm-6">
 		<h1 class="monospace">
-			<form class="form col-sm-3" method="get" action="/venues/{{venue.id}}/edit">
-				<input type="submit" value="Edit" class="btn btn-primary btn-lg btn-block">
-			</form>		
 			{{ venue.name }}
 		</h1>
 		<p class="subtitle">
@@ -32,7 +55,7 @@
 		<p>
 			<i class="fab fa-facebook-f"></i> {% if venue.facebook_link %}<a href="{{ venue.facebook_link }}" target="_blank">{{ venue.facebook_link }}</a>{% else %}No Facebook Link{% endif %}
 		</p>
-		{% if venue.seeking_talent %}
+		{% if venue.seeking_venue %}
 		<div class="seeking">
 			<p class="lead">Currently seeking talent</p>
 			<div class="description">
