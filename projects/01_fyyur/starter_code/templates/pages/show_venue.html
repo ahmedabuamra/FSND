@@ -4,6 +4,9 @@
 <div class="row">
 	<div class="col-sm-6">
 		<h1 class="monospace">
+			<form class="form col-sm-3" method="get" action="/venues/{{venue.id}}/edit">
+				<input type="submit" value="Edit" class="btn btn-primary btn-lg btn-block">
+			</form>		
 			{{ venue.name }}
 		</h1>
 		<p class="subtitle">

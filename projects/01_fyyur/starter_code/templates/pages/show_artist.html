@@ -4,6 +4,9 @@
 <div class="row">
 	<div class="col-sm-6">
 		<h1 class="monospace">
+			<form class="form col-sm-3" method="get" action="/artists/{{artist.id}}/edit">
+				<input type="submit" value="Edit" class="btn btn-primary btn-lg btn-block">
+			</form>		
 			{{ artist.name }}
 		</h1>
 		<p class="subtitle">
