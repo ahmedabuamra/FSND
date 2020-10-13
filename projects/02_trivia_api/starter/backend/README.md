@@ -40,11 +40,10 @@ psql trivia < trivia.psql
 
 From within the `backend` directory first ensure you are working using your created virtual environment.
 
-To run the server, execute:
+To run the server, update .env file with your system data then execute:
 
 ```bash
-export FLASK_APP=flaskr
-export FLASK_ENV=development
+source .env
 flask run
 ```
 
@@ -52,30 +51,23 @@ Setting the `FLASK_ENV` variable to `development` will detect file changes and r
 
 Setting the `FLASK_APP` variable to `flaskr` directs flask to use the `flaskr` directory and the `__init__.py` file to find the application. 
 
-## Tasks
+## API Reference
 
-One note before you delve into your tasks: for each endpoint you are expected to define the endpoint and response data. The frontend will be a plentiful resource because it is set up to expect certain endpoints and response data formats already. You should feel free to specify endpoints in your own way; if you do so, make sure to update the frontend or you will get some unexpected behavior. 
+### Error handeling
 
-1. Use Flask-CORS to enable cross-domain requests and set response headers. 
-2. Create an endpoint to handle GET requests for questions, including pagination (every 10 questions). This endpoint should return a list of questions, number of total questions, current category, categories. 
-3. Create an endpoint to handle GET requests for all available categories. 
-4. Create an endpoint to DELETE question using a question ID. 
-5. Create an endpoint to POST a new question, which will require the question and answer text, category, and difficulty score. 
-6. Create a POST endpoint to get questions based on category. 
-7. Create a POST endpoint to get questions based on a search term. It should return any questions for whom the search term is a substring of the question. 
-8. Create a POST endpoint to get questions to play the quiz. This endpoint should take category and previous question parameters and return a random questions within the given category, if provided, and that is not one of the previous questions. 
-9. Create error handlers for all expected errors including 400, 404, 422 and 500. 
+Supported error codes are 400, 404, 405, 422 and 500
+returned as JSON response formatted as following
 
-REVIEW_COMMENT
 ```
-This README is missing documentation of your endpoints. Below is an example for your endpoint to get all categories. Please use it as a reference for creating your documentation and resubmit your code. 
+ {
+    "success": False, 
+    "error": 500,
+    "message": "Internal server error"
+}
+```
 
-Endpoints
-GET '/categories'
-GET ...
-POST ...
-DELETE ...
-
+### Endpoints
+```
 GET '/categories'
 - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
 - Request Arguments: None
@@ -87,12 +79,71 @@ GET '/categories'
 '5' : "Entertainment",
 '6' : "Sports"}
 
+GET '/questions'
+- Fetches fixed number of questions regardless their categories given the page number
+- Request Arguments:
+    - page: the index of the page (results) to be returned
+- Returns: A JSON represented by the keys {questions, total_questions, categories, current_category}. where questions is an array of the requested questions,  total_questions is the number of all questions in the database for pagination, categories are all categories and current categories is always None.
+
+DELETE '/questions/<int:question_id>'
+- Deletes a question given its id in the URL.
+- Request Arguments: None
+- Returns: JSON as following
+{
+    "success": True
+}
+
+POST '/questions'
+- Adds new question to the database in specific category
+- Request Payload:
+    - question: the question text
+    - answer: answe of the question
+    - difficulty: a number to indicate the level of the question 
+    - category: category id to link the question with its corresponding category.
+- Returns: JSON as following
+{
+    "success": True
+}
+
+POST '/questions/searches'
+- Searches for a question given any substring from the question text.
+- Request Payload:
+    - searchTerm: the text used in searching
+- Returns: JSON as following
+{
+    "questions": array of questions objects,
+    "total_questions": total number of questions meetings this search,
+    "current_category": None
+}
+
+GET '/categories/<int:category_id>/questions'
+- Fetches all qustions in category with category id = category_id
+- Request Arguments: None
+- Returns: JSON as following
+{
+    "questions": array of questions objects,
+    "total_questions": total number of questions meetings this search,
+    "current_category": None
+}
+
+POST '/quizzes'
+- Returns a random question that has not being asked in this quiz till now
+- Request Payload:
+    - quiz_category: the category of the quiz which the endpoint should pick random question from.
+    - previous_questions: array of integers to tell which questions shouldn't be picked next.
+- Returns: JSON as following
+{
+    "questions": array of questions objects,
+    "total_questions": total number of questions meetings this search,
+    "current_category": id of the category from quiz_category object in the payload
+}
 ```
 
 
 ## Testing
 To run the tests, run
 ```
+source .env
 dropdb trivia_test
 createdb trivia_test
 psql trivia_test < trivia.psql
